@@ -1,0 +1,317 @@
+<Page x:Class="RestaurantApp.Views.OrderView"
+      xmlns:loc="clr-namespace:RestaurantApp.Localization"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:conv="clr-namespace:RestaurantApp.Converters"
+      xmlns:models="clr-namespace:RestaurantApp.Models"
+      Background="{StaticResource PrimaryBrush}">
+
+    <Page.Resources>
+        <conv:StatusToColorConverter  x:Key="StatusColor"/>
+        <conv:StatusToStringConverter x:Key="StatusString"/>
+        <conv:CurrencyConverter       x:Key="Currency"/>
+    </Page.Resources>
+
+    <Grid Margin="16">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="300"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ══════════════════════════════════
+             ЛІВА КОЛОНКА: Список замовлень
+             ══════════════════════════════════ -->
+        <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,8,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Text="{loc:Tr Orders_Title}" Style="{StaticResource SectionHeader}"/>
+
+                <!-- Форма нового замовлення -->
+                <Border Grid.Row="1" Background="#0A1F3A" CornerRadius="8" Padding="12" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Tr Orders_New}" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,8"/>
+
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,4,0">
+                                <TextBlock Text="{loc:Tr Orders_Table}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
+                                <ComboBox Style="{StaticResource ModernComboBox}"
+                                          ItemsSource="{Binding Tables}"
+                                          SelectedItem="{Binding SelectedTable}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="4,0,0,0">
+                                <TextBlock Text="{loc:Tr Orders_Waiter}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
+                                <ComboBox Style="{StaticResource ModernComboBox}"
+                                          ItemsSource="{Binding Waiters}"
+                                          SelectedItem="{Binding SelectedWaiter}"
+                                          DisplayMemberPath="Name"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Button Content="{loc:Tr Orders_Create}"
+                                Style="{StaticResource PrimaryButton}"
+                                Command="{Binding CreateOrderCommand}"
+                                HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Список замовлень -->
+                <ListBox Grid.Row="2" Style="{StaticResource ModernListBox}"
+                         ItemContainerStyle="{StaticResource ModernListBoxItem}"
+                         ItemsSource="{Binding AllOrders}"
+                         SelectedItem="{Binding SelectedOrder}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="#0A1F3A" CornerRadius="8" Padding="12" Margin="0,0,0,6"
+                                    Cursor="Hand">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                                <Setter Property="Background" Value="#12305A"/>
+                                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                                <Setter Property="BorderThickness" Value="1"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition/>
+                                        <RowDefinition/>
+                                        <RowDefinition/>
+                                    </Grid.RowDefinitions>
+                                    <Grid Grid.Row="0">
+                                        <TextBlock Text="{loc:Fmt Key=Order_Number, Path=Id}"
+                                                   FontWeight="Bold" Foreground="{StaticResource TextLightBrush}"
+                                                   FontSize="13"/>
+                                        <Border HorizontalAlignment="Right" CornerRadius="4" Padding="6,2"
+                                                Background="{Binding Status, Converter={StaticResource StatusColor}}">
+                                            <TextBlock Text="{loc:Status}"
+                                                       FontSize="11" Foreground="White" FontWeight="SemiBold"/>
+                                        </Border>
+                                    </Grid>
+                                    <TextBlock Grid.Row="1"
+                                               Text="{loc:Fmt Key=Table_Number, Path=TableNumber}"
+                                               FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                                               Margin="0,4,0,0"/>
+                                    <Grid Grid.Row="2" Margin="0,4,0,0">
+                                        <TextBlock Text="{Binding Waiter.Name, StringFormat='👤 {0}'}"
+                                                   FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                                        <TextBlock HorizontalAlignment="Right" FontSize="12" FontWeight="Bold"
+                                                   Foreground="{StaticResource AccentBrush}">
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}{0:F2} ₴">
+                                                    <Binding Path="." Converter="{x:Null}"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+
+        <!-- ══════════════════════════════════
+             ЦЕНТР: Деталі замовлення
+             ══════════════════════════════════ -->
+        <Border Grid.Column="1" Style="{StaticResource Card}" Margin="8,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Заголовок + статус -->
+                <Grid Grid.Row="0" Margin="0,0,0,12">
+                    <TextBlock Text="{loc:Tr Orders_Details}" Style="{StaticResource SectionHeader}" Margin="0"/>
+                    <Border HorizontalAlignment="Right" CornerRadius="6" Padding="10,4"
+                            Background="{Binding SelectedOrder.Status, Converter={StaticResource StatusColor}}">
+                        <TextBlock Text="{Binding SelectedOrderStatus}"
+                                   Foreground="White" FontWeight="Bold" FontSize="13"/>
+                    </Border>
+                </Grid>
+
+                <!-- Додати страву -->
+                <Border Grid.Row="1" Background="#0A1F3A" CornerRadius="8" Padding="12" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="70"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ComboBox Grid.Column="0" Style="{StaticResource ModernComboBox}"
+                                  ItemsSource="{Binding MenuDishes}"
+                                  SelectedItem="{Binding SelectedDish}"
+                                  Margin="0,0,8,0"
+                                  IsEnabled="{Binding HasOrder}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Emoji}" Margin="0,0,6,0"/>
+                                        <TextBlock Text="{Binding Name}"/>
+                                        <TextBlock Text="{Binding Price, StringFormat=' — {0:F0} ₴'}"
+                                                   Foreground="{StaticResource TextMutedBrush}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBox Grid.Column="1" Style="{StaticResource ModernTextBox}"
+                                 Text="{Binding DishQty, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="0,0,8,0" TextAlignment="Center"
+                                 IsEnabled="{Binding HasOrder}"/>
+                        <Button Grid.Column="2" Content="{loc:Tr Orders_Add}"
+                                Style="{StaticResource PrimaryButton}"
+                                Command="{Binding AddDishCommand}"
+                                IsEnabled="{Binding HasOrder}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Список позицій замовлення -->
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding OrderItems}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="#0A1F3A" CornerRadius="8" Padding="12" Margin="0,0,0,6">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding Dish.Emoji}"
+                                                   FontSize="22" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Dish.Name}"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextLightBrush}"/>
+                                            <TextBlock FontSize="12" Foreground="{StaticResource TextMutedBrush}">
+                                                <Run Text="{Binding Dish.Price, StringFormat='{}{0:F2} ₴'}"/>
+                                                <Run Text=" × "/>
+                                                <Run Text="{Binding Quantity}"/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2" VerticalAlignment="Center"
+                                                   Text="{Binding Subtotal, StringFormat='{}{0:F2} ₴'}"
+                                                   FontWeight="Bold" FontSize="14"
+                                                   Foreground="{StaticResource AccentBrush}"
+                                                   Margin="0,0,12,0"/>
+                                        <Button Grid.Column="3" Content="✕"
+                                                Style="{StaticResource DangerButton}"
+                                                Padding="8,4" FontSize="12"
+                                                Command="{Binding DataContext.RemoveDishCommand,
+                                                    RelativeSource={RelativeSource AncestorType=Page}}"
+                                                CommandParameter="{Binding}"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <!-- Знижка + Підсумок -->
+                <Border Grid.Row="3" Background="#0A1F3A" CornerRadius="8" Padding="12" Margin="0,8,0,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0" Margin="0,0,0,8">
+                            <TextBlock Text="{loc:Tr Orders_Discount}" Foreground="{StaticResource TextMutedBrush}"
+                                       VerticalAlignment="Center"/>
+                            <TextBox HorizontalAlignment="Right" Width="80"
+                                     Style="{StaticResource ModernTextBox}"
+                                     Text="{Binding DiscountPercent, UpdateSourceTrigger=PropertyChanged}"
+                                     TextAlignment="Center"/>
+                        </Grid>
+                        <Grid Grid.Row="1">
+                            <TextBlock Text="{loc:Tr Orders_ToPay}" FontSize="16" FontWeight="Bold"
+                                       Foreground="{StaticResource TextLightBrush}" VerticalAlignment="Center"/>
+                            <TextBlock HorizontalAlignment="Right" FontSize="22" FontWeight="Bold"
+                                       Foreground="{StaticResource AccentBrush}"
+                                       Text="{Binding OrderTotal, StringFormat='{}{0:F2} ₴'}"/>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- Статус повідомлення -->
+                <TextBlock Grid.Row="4" Text="{Binding StatusMessage}"
+                           Foreground="{StaticResource SuccessBrush}"
+                           FontSize="12" Margin="0,8,0,0"
+                           TextWrapping="Wrap"/>
+            </Grid>
+        </Border>
+
+        <!-- ══════════════════════════════════
+             ПРАВА КОЛОНКА: Дії над замовленням
+             ══════════════════════════════════ -->
+        <Border Grid.Column="2" Style="{StaticResource Card}" Margin="8,0,0,0">
+            <StackPanel>
+                <TextBlock Text="{loc:Tr Orders_Actions}" Style="{StaticResource SectionHeader}"/>
+
+                <TextBlock Text="{loc:Tr Orders_StatusChange}" FontSize="12" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,8"/>
+
+                <Button Content="{loc:Tr Orders_ToKitchen}"
+                        Style="{StaticResource PrimaryButton}"
+                        Margin="0,0,0,8" HorizontalAlignment="Stretch"
+                        Command="{Binding SetInProgressCommand}"/>
+
+                <Button Content="{loc:Tr Orders_Served}"
+                        Margin="0,0,0,8" HorizontalAlignment="Stretch"
+                        Command="{Binding SetServedCommand}">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+                            <Setter Property="Background" Value="#2196F3"/>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <Separator Background="#1A2F50" Margin="0,8"/>
+
+                <TextBlock Text="{loc:Tr Orders_Payment}" FontSize="12" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,8"/>
+
+                <Button Content="{loc:Tr Orders_Pay}"
+                        Style="{StaticResource SuccessButton}"
+                        Margin="0,0,0,8" HorizontalAlignment="Stretch"
+                        Command="{Binding PayOrderCommand}"/>
+
+                <Separator Background="#1A2F50" Margin="0,8"/>
+
+                <Button Content="{loc:Tr Orders_Cancel}"
+                        Style="{StaticResource DangerButton}"
+                        HorizontalAlignment="Stretch"
+                        Command="{Binding CancelOrderCommand}"/>
+
+                <!-- Інформаційний блок -->
+                <Border Background="#0A1F3A" CornerRadius="8" Padding="12" Margin="0,20,0,0">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Tr Orders_InfoTitle}" FontWeight="Bold"
+                                   Foreground="{StaticResource TextLightBrush}" Margin="0,0,0,8"/>
+                        <TextBlock TextWrapping="Wrap" FontSize="11"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   Text="{loc:Tr Orders_InfoText}"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Page>
